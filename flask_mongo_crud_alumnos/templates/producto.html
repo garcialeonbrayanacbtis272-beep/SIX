@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ producto.name }} - Six</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    
+    .thumb-img {
+      width: 100%;
+      cursor: pointer;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      transition: 0.2s;
+    }
+    
+    .thumb-img:hover {
+      border-color: #ce001b;
+      transform: scale(1.03);
+    }
+    
+    .six-primary {
+      color: #ce001b;
+    }
+    
+    .six-bg {
+      background-color: #ce001b;
+    }
+    
+    .six-bg:hover {
+      background-color: #a30015;
+    }
+    
+    .savings-badge {
+      background-color: #28a745;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    
+    .product-card {
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .delivery-info {
+      background-color: #e8f5e8;
+      border-left: 4px solid #28a745;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    
+    .age-restriction {
+      background-color: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 15px 0;
+    }
+    
+    .six-logo {
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: #ce001b;
+      margin-bottom: 10px;
+    }
+  </style>
+
+  <script>
+    function cambiarImagen(src) {
+      document.getElementById("img-principal").src = src;
+    }
+  </script>
+</head>
+
+<body class="bg-light">
+
+<!-- Navbar Six -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #ce001b;">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="{{ url_for('inicio') }}">
+      <span class="six-logo">SIX</span>
+    </a>
+    <div class="navbar-nav ms-auto">
+      <a class="nav-link" href="{{ url_for('carrito') }}">
+        <i class="bi bi-cart3"></i> Carrito
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-4">
+  <div class="row">
+    
+    <!-- Imágenes del producto -->
+    <div class="col-md-6">
+      <div class="product-card p-3 bg-white">
+        <img id="img-principal" src="{{ producto.img }}" class="img-fluid rounded w-100" style="max-height: 400px; object-fit: contain;">
+        
+        <!-- Miniaturas -->
+        <div class="row mt-3">
+          {% if producto.images %}
+            {% for imagen in producto.images %}
+            <div class="col-4 mb-2">
+              <img onclick="cambiarImagen('{{ imagen }}')" src="{{ imagen }}" class="thumb-img">
+            </div>
+            {% endfor %}
+          {% else %}
+            <!-- Si no hay imágenes adicionales, mostrar la principal como miniatura -->
+            <div class="col-4 mb-2">
+              <img onclick="cambiarImagen('{{ producto.img }}')" src="{{ producto.img }}" class="thumb-img">
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Información del producto -->
+    <div class="col-md-6">
+      <div class="bg-white p-4 rounded-3 shadow-sm">
+        
+        <!-- Marca y categoría -->
+        <div class="six-logo">SIX</div>
+        
+        <h2 class="fw-bold">{{ producto.name }}</h2>
+        
+        {% if producto.brand %}
+        <p class="text-muted mb-1">
+          <i class="bi bi-tag"></i> Marca: <strong class="six-primary">{{ producto.brand }}</strong>
+        </p>
+        {% endif %}
+        
+        {% if producto.category %}
+        <p class="text-muted mb-3">
+          <i class="bi bi-grid"></i> Categoría: <strong>{{ producto.category }}</strong>
+        </p>
+        {% endif %}
+
+        <!-- Calificación con estrellas -->
+        <div class="text-warning fs-5 mb-3">
+          {% for i in range(1, 6) %}
+            {% if producto.rating >= i %}
+              <i class="bi bi-star-fill"></i>
+            {% elif producto.rating >= i - 0.5 %}
+              <i class="bi bi-star-half"></i>
+            {% else %}
+              <i class="bi bi-star"></i>
+            {% endif %}
+          {% endfor %}
+          <span class="text-dark fs-6 ms-2">({{ producto.rating }}/5)</span>
+        </div>
+
+        <!-- Precios y ahorro -->
+        <div class="mb-3">
+          <h3 class="six-primary fw-bold">${{ producto.price }}.00</h3>
+          
+          {% if producto.oldPrice %}
+          <div class="d-flex align-items-center gap-3 mt-2">
+            <span class="text-decoration-line-through text-muted fs-5">
+              ${{ producto.oldPrice }}.00
+            </span>
+            <span class="savings-badge">
+              <i class="bi bi-arrow-down"></i> Ahorras ${{ producto.oldPrice - producto.price }}.00
+            </span>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Información de entrega -->
+        <div class="delivery-info">
+          <i class="bi bi-truck text-success"></i>
+          <strong>Envío gratis</strong> en pedidos superiores a $200.00
+          {% if producto.delivery %}
+          <br><small>{{ producto.delivery }}</small>
+          {% endif %}
+        </div>
+
+        <!-- Restricción de edad para productos específicos -->
+        {% if producto.category in ['alcohol', 'cigarros'] %}
+        <div class="age-restriction">
+          <i class="bi bi-exclamation-triangle text-warning"></i>
+          <strong>Producto con restricción de edad</strong>
+          <br><small>Debes ser mayor de 18 años para comprar este producto</small>
+        </div>
+        {% endif %}
+
+        <!-- Descripción -->
+        {% if producto.description %}
+        <div class="mt-4">
+          <h5 class="fw-bold">Descripción</h5>
+          <p class="text-muted">{{ producto.description }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Lista de detalles -->
+        {% if producto.details %}
+        <div class="mt-4">
+          <h5 class="fw-bold">Características principales</h5>
+          <ul class="list-unstyled">
+            {% for d in producto.details %}
+            <li class="mb-2">
+              <i class="bi bi-check-circle six-primary me-2"></i>{{ d }}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        <!-- Información del vendedor -->
+        {% if producto.seller %}
+        <div class="mt-4">
+          <h5 class="fw-bold">Información del vendedor</h5>
+          <p class="mb-1"><i class="bi bi-shop me-2"></i>Vendido por: <strong>{{ producto.seller }}</strong></p>
+          {% if producto.returnPolicy %}
+          <p class="mb-0"><i class="bi bi-arrow-return-left me-2"></i>{{ producto.returnPolicy }}</p>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Opciones de pago -->
+        {% if producto.monthlyPayments %}
+        <div class="mt-4 p-3 bg-light rounded">
+          <i class="bi bi-credit-card-2-front six-primary me-2"></i>
+          <strong>Opciones de financiamiento:</strong>
+          <br>
+          <span class="text-success">{{ producto.monthlyPayments }}</span>
+        </div>
+        {% endif %}
+
+        <!-- Botones de acción -->
+        <div class="mt-4">
+          <form action="{{ url_for('agregar_carrito', producto_id=producto['_id']) }}" method="POST">
+            <button class="btn six-bg text-white btn-lg w-100 py-3 fw-bold">
+              <i class="bi bi-cart-plus"></i> Agregar al carrito
+            </button>
+          </form>
+          
+          <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-outline-secondary flex-fill">
+              <i class="bi bi-heart"></i> Favoritos
+            </button>
+            <button class="btn btn-outline-secondary flex-fill">
+              <i class="bi bi-share"></i> Compartir
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="bg-dark text-white text-center py-4 mt-5">
+  <div class="container">
+    <span class="six-logo text-white">SIX</span>
+    <p class="mb-0 mt-2">© 2024 Six. Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+</body>
+</html>
+
+

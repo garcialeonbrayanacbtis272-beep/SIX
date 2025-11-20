@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Six</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f5f6f7;
+    }
+    .navbar {
+      background-color: #ce001b; /* Rojo Six */
+    }
+    .navbar-brand {
+      font-weight: bold;
+      color: white !important;
+      font-size: 1.5rem;
+    }
+    .nav-link, .navbar-text {
+      color: white !important;
+    }
+    .categories-bar {
+      background-color: #a30015; /* Rojo más oscuro */
+      color: white;
+      padding: 10px 0;
+      text-align: center;
+    }
+    .categories-bar a {
+      color: white;
+      margin: 0 15px;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .categories-bar a:hover {
+      color: #ffce00; /* Amarillo Six */
+      text-decoration: none;
+    }
+
+    .card {
+      border: none;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 15px;
+      transition: transform 0.2s ease;
+      cursor: pointer;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    .card img {
+      height: 200px;
+      object-fit: contain;
+      padding: 15px;
+    }
+    .price {
+      color: #ce001b; /* Rojo Six */
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+    .old-price {
+      text-decoration: line-through;
+      color: #999;
+      font-size: 0.9rem;
+    }
+    .ahorro {
+      color: green;
+      font-size: 0.9rem;
+    }
+    .btn-agregar {
+      background-color: #ce001b; /* Rojo Six */
+      color: white;
+      border: none;
+      width: 100%;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn-agregar:hover {
+      background-color: #a30015; /* Rojo más oscuro */
+      transform: scale(1.03);
+    }
+
+    /* Hacer que el link no cambie el estilo */
+    .link-producto {
+      text-decoration: none;
+      color: inherit;
+    }
+    
+    /* Logo personalizado */
+    .six-logo {
+      font-weight: 800;
+      font-size: 1.8rem;
+      letter-spacing: 1px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar principal -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand d-flex align-items-center" href="/">
+        <span class="six-logo">SIX</span>
+      </a>
+
+      <form class="d-flex mx-auto" style="width: 50%;" id="search-form" 
+            action="{{ url_for('buscar') }}" method="GET">
+        <input class="form-control me-2" type="search" name="q" placeholder="Buscar productos..." required>
+        <button class="btn btn-light" type="submit">
+          <i class="bi bi-search text-primary"></i>
+        </button>
+      </form>
+
+      <div class="d-flex align-items-center text-white gap-4">
+        <div>
+          <i class="bi bi-person-circle"></i> {{ usuario }}
+        </div>
+        <div>
+          <a href="{{ url_for('carrito') }}" style="color: white; text-decoration: none;">
+            <i class="bi bi-cart3"></i> 
+            <span class="d-none d-md-inline">Ver carrito</span>
+          </a>
+        </div>
+        <div>
+          <a href="{{ url_for('logout') }}" style="color: white; text-decoration: none;">
+            <i class="bi bi-box-arrow-right"></i> Salir
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Barra de categorías modificada -->
+  <div class="categories-bar">
+    <a href="{{ url_for('categoria', category='alcohol') }}"><i class="bi bi-cup-straw"></i> Alcohol</a>
+    <a href="{{ url_for('categoria', category='refrescos') }}"><i class="bi bi-droplet"></i> Refrescos</a>
+    <a href="{{ url_for('categoria', category='sabritas') }}"><i class="bi bi-basket"></i> Sabritas</a>
+    <a href="{{ url_for('categoria', category='cigarros') }}"><i class="bi bi-fire"></i> Cigarros</a>
+    <a href="{{ url_for('categoria', category='dulces') }}"><i class="bi bi-suit-heart"></i> Dulces</a>
+    <a href="{{ url_for('categoria', category='abarrotes') }}"><i class="bi bi-shop"></i> Abarrotes</a>
+  </div>
+
+  <!-- PRODUCTOS -->
+  <div class="container mt-4">
+    <div class="row">
+      {% for producto in productos %}
+      <div class="col-md-3 mb-4">
+
+        <!-- 🔗 Toda la tarjeta es clickeable -->
+        <a class="link-producto" href="{{ url_for('producto_detalle', producto_id=producto['_id']) }}">
+
+          <div class="card text-center">
+            <img src="{{ producto['img'] }}" alt="{{ producto['name'] }}">
+            <div class="card-body">
+              <h6>{{ producto['name'] }}</h6>
+              <div class="price">${{ producto['price'] }}.00</div>
+              <div class="old-price">${{ producto['oldPrice'] }}.00</div>
+              <div class="ahorro">Ahorras ${{ producto['oldPrice'] - producto['price'] }}.00</div>
+            </div>
+          </div>
+
+        </a>
+
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</body>
+</html>
+
+

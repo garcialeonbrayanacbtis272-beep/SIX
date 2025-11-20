@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Añadir Productos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            width: 50%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .total {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Añadir Productos</h1>
+        <input type="text" id="productName" placeholder="Nombre del producto">
+        <input type="number" id="productCost" placeholder="Costo del producto" min="0" step="0.01">
+        <button onclick="addProduct()">Añadir Producto</button>
+        <ul id="productList"></ul>
+        <button onclick="calculateTotal()">Finalizar Selección</button>
+        <div id="totalCost" class="total"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
