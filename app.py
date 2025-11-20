@@ -8,7 +8,7 @@ app = Flask(__name__, template_folder='flask_mongo_crud_alumnos/templates')
 app.secret_key = "clave_super_secreta_six"
 
 # ------------------ CONEXIÓN A MONGODB ------------------
-client = MongoClient(""mongodb+srv://garcialeonbrayanacbtis272_db_user:0hcpySZAsjYw3tLD@six.p5epooe.mongodb.net/six")
+client = MongoClient("mongodb+srv://garcialeonbrayanacbtis272_db_user:0hcpySZAsjYw3tLD@six.p5epooe.mongodb.net/six")
 db = client["six"]
 usuarios = db["usuarios"]
 productos = db["productos"]
