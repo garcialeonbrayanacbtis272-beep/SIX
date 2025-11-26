@@ -22,7 +22,6 @@ except Exception as e:
 
 # ------------------ FUNCIONES AUXILIARES ------------------
 def calcular_edad(fecha_nacimiento):
-    """Calcula la edad basándose en la fecha de nacimiento"""
     hoy = date.today()
     edad = hoy.year - fecha_nacimiento.year
     if (hoy.month, hoy.day) < (fecha_nacimiento.month, fecha_nacimiento.day):
@@ -30,14 +29,12 @@ def calcular_edad(fecha_nacimiento):
     return edad
 
 def es_producto_restringido(categoria):
-    """Determina si un producto tiene restricción de edad"""
     categorias_restringidas = ['alcohol', 'cigarros', 'licor', 'cerveza', 'tabaco', 'vino']
     if categoria:
         return any(restr in categoria.lower() for restr in categorias_restringidas)
     return False
 
 def verificar_edad_usuario(usuario):
-    """Verifica si el usuario es mayor de edad"""
     user = usuarios.find_one({"usuario": usuario})
     if user and "fecha_nacimiento" in user:
         try:
@@ -52,7 +49,6 @@ def verificar_edad_usuario(usuario):
     return False
 
 def generar_numero_orden():
-    """Genera un número de orden único"""
     return f"SIX-{random.randint(100000, 999999)}"
 
 # ---------------------------------------------------------
@@ -98,7 +94,7 @@ def recuperar_contrasena():
     return render_template("recuperar_contrasena.html", mensaje=mensaje)
 
 # ---------------------------------------------------------
-# REGISTRO CON VERIFICACIÓN DE EDAD
+# REGISTRO
 # ---------------------------------------------------------
 @app.route("/registro", methods=["GET", "POST"])
 def registro():
@@ -111,7 +107,6 @@ def registro():
         verificacion_edad = request.form.get("verificacion_edad") == "on"
         terminos = request.form.get("terminos") == "on"
 
-        # Validaciones
         if not all([usuario, contrasena, confirmar, fecha_nacimiento_str]):
             mensaje = "Por favor completa todos los campos obligatorios."
         elif contrasena != confirmar:
@@ -126,16 +121,13 @@ def registro():
             mensaje = "Debes aceptar los términos y condiciones."
         else:
             try:
-                # Convertir string a datetime para MongoDB
                 fecha_nacimiento_dt = datetime.strptime(fecha_nacimiento_str, "%Y-%m-%d")
-                # Calcular edad usando date
                 fecha_nacimiento_date = fecha_nacimiento_dt.date()
                 edad = calcular_edad(fecha_nacimiento_date)
                 
                 if edad < 18:
                     mensaje = "Debes ser mayor de 18 años para registrarte en Six."
                 else:
-                    # Guardar como string en MongoDB para evitar problemas de serialización
                     usuarios.insert_one({
                         "usuario": usuario,
                         "contrasena": contrasena,
@@ -153,7 +145,7 @@ def registro():
     return render_template("registro.html", mensaje=mensaje)
 
 # ---------------------------------------------------------
-# INICIO - LISTA DE PRODUCTOS
+# INICIO - LISTA DE PRODUCTOS (CATEGORÍAS INTEGRADAS)
 # ---------------------------------------------------------
 @app.route("/inicio")
 def inicio():
@@ -204,7 +196,7 @@ def buscar():
         return redirect(url_for("inicio"))
 
 # ---------------------------------------------------------
-# FILTRO POR CATEGORÍA
+# FILTRO POR CATEGORÍA (CON "todo")
 # ---------------------------------------------------------
 @app.route("/categoria/<category>")
 def categoria(category):
@@ -212,7 +204,10 @@ def categoria(category):
         return redirect(url_for("login"))
 
     try:
-        productos_list = list(productos.find({"category": category}))
+        if category.lower() == "todo":
+            productos_list = list(productos.find())
+        else:
+            productos_list = list(productos.find({"category": category}))
 
         if not productos_list:
             flash("No hay productos en esta categoría aún.")
@@ -228,7 +223,7 @@ def categoria(category):
         return redirect(url_for("inicio"))
 
 # ---------------------------------------------------------
-# DETALLE DE PRODUCTO
+# DETALLE PRODUCTO
 # ---------------------------------------------------------
 @app.route("/producto/<producto_id>")
 def producto_detalle(producto_id):
@@ -254,7 +249,7 @@ def producto_detalle(producto_id):
         return redirect(url_for("inicio"))
 
 # ---------------------------------------------------------
-# AGREGAR AL CARRITO CON VERIFICACIÓN DE EDAD
+# AGREGAR CARRITO
 # ---------------------------------------------------------
 @app.route("/agregar_carrito/<producto_id>", methods=["POST"])
 def agregar_carrito(producto_id):
@@ -267,23 +262,19 @@ def agregar_carrito(producto_id):
             flash("❌ Producto no encontrado")
             return redirect(url_for("inicio"))
         
-        # Verificar restricción de edad
+        # Verificación edad
         if es_producto_restringido(producto.get("category", "")) and not session.get("mayor_edad", False):
             flash("❌ Debes ser mayor de 18 años para comprar este producto.")
             return redirect(url_for("producto_detalle", producto_id=producto_id))
 
         carrito = session.get("carrito", [])
 
-        # Buscar si el producto ya está en el carrito
-        encontrado = False
+        # Si ya existe, aumentar cantidad
         for item in carrito:
             if item["_id"] == str(producto["_id"]):
                 item["cantidad"] += 1
-                encontrado = True
                 break
-        
-        # Si no está, agregarlo
-        if not encontrado:
+        else:
             carrito.append({
                 "_id": str(producto["_id"]),
                 "name": producto["name"],
@@ -315,7 +306,6 @@ def carrito():
         carrito = session.get("carrito", [])
         total = sum(item["price"] * item["cantidad"] for item in carrito)
         
-        # Verificar productos restringidos en el carrito
         productos_restringidos = any(
             es_producto_restringido(item.get("category", "")) 
             for item in carrito
@@ -333,7 +323,7 @@ def carrito():
         return redirect(url_for("inicio"))
 
 # ---------------------------------------------------------
-# ACTUALIZAR CANTIDAD DEL CARRITO
+# ACTUALIZAR CANTIDAD
 # ---------------------------------------------------------
 @app.route("/actualizar_cantidad/<producto_id>", methods=["POST"])
 def actualizar_cantidad(producto_id):
@@ -358,7 +348,7 @@ def actualizar_cantidad(producto_id):
         return redirect(url_for("carrito"))
 
 # ---------------------------------------------------------
-# ELIMINAR PRODUCTO DEL CARRITO
+# ELIMINAR DEL CARRITO
 # ---------------------------------------------------------
 @app.route("/eliminar_carrito/<producto_id>", methods=["POST"])
 def eliminar_carrito(producto_id):
@@ -396,7 +386,7 @@ def vaciar_carrito():
         return redirect(url_for("carrito"))
 
 # ---------------------------------------------------------
-# PAGO CON VERIFICACIÓN FINAL - VERSIÓN CORREGIDA
+# PAGO
 # ---------------------------------------------------------
 @app.route("/pago", methods=["GET", "POST"])
 def pago():
@@ -410,87 +400,53 @@ def pago():
     print(f"🛒 Carrito tiene {len(carrito)} productos")
     
     if not carrito:
-        print("❌ Carrito vacío")
         flash("❌ Tu carrito está vacío")
         return redirect(url_for("inicio"))
         
     total = sum(item["price"] * item["cantidad"] for item in carrito)
-    print(f"💰 Total: {total}")
 
-    # Verificación final de productos restringidos
     productos_restringidos = [
         item for item in carrito 
         if es_producto_restringido(item.get("category", ""))
     ]
     
     if productos_restringidos and not session.get("mayor_edad", False):
-        print("❌ Productos restringidos sin verificación de edad")
         flash("❌ No puedes comprar productos restringidos sin verificar tu edad")
         return redirect(url_for("carrito"))
 
     if request.method == "POST":
-        print("📝 Procesando formulario POST")
-        
         try:
             nombre = request.form.get("nombre", "").strip()
             tarjeta = request.form.get("tarjeta", "").strip()
             cvv = request.form.get("cvv", "").strip()
             fecha = request.form.get("fecha", "").strip()
 
-            print(f"📋 Datos recibidos - Nombre: {nombre}, Tarjeta: {tarjeta}, CVV: {cvv}, Fecha: {fecha}")
-
-            # Validaciones
             if not all([nombre, tarjeta, cvv, fecha]):
                 flash("❌ Por favor completa todos los campos")
-                print("❌ Campos incompletos")
                 return redirect(url_for("pago"))
             
-            # Limpiar número de tarjeta (quitar espacios)
             tarjeta_limpia = re.sub(r'\s+', '', tarjeta)
             
             if not re.match(r'^\d{13,19}$', tarjeta_limpia):
-                flash("❌ Número de tarjeta inválido (debe tener entre 13 y 19 dígitos)")
-                print("❌ Tarjeta inválida")
+                flash("❌ Número de tarjeta inválido")
                 return redirect(url_for("pago"))
                 
             if not re.match(r'^\d{3,4}$', cvv):
-                flash("❌ CVV inválido (debe tener 3 o 4 dígitos)")
-                print("❌ CVV inválido")
+                flash("❌ CVV inválido")
                 return redirect(url_for("pago"))
 
-            # Validar formato de fecha (MM/AA)
             if not re.match(r'^(0[1-9]|1[0-2])\/[0-9]{2}$', fecha):
-                flash("❌ Formato de fecha inválido. Usa MM/AA (ej: 12/25)")
-                print("❌ Fecha inválida")
+                flash("❌ Formato de fecha inválido (MM/AA)")
                 return redirect(url_for("pago"))
 
-            # Validar que la fecha no esté expirada
-            try:
-                mes, anio = fecha.split('/')
-                mes_int = int(mes)
-                anio_int = int(anio)
-                current_year = datetime.now().year % 100
-                current_month = datetime.now().month
-                
-                if anio_int < current_year or (anio_int == current_year and mes_int < current_month):
-                    flash("❌ La tarjeta está expirada")
-                    print("❌ Tarjeta expirada")
-                    return redirect(url_for("pago"))
-            except ValueError:
-                flash("❌ Formato de fecha inválido")
-                return redirect(url_for("pago"))
-
-            # Generar número de orden
             numero_orden = generar_numero_orden()
-            print(f"📦 Número de orden generado: {numero_orden}")
 
-            # Guardar en la base de datos
             pago_data = {
                 "usuario": session["usuario"],
                 "carrito": carrito,
                 "total": total,
                 "nombre_tarjeta": nombre,
-                "numero_tarjeta": tarjeta_limpia[-4:],  # Solo guardar últimos 4 dígitos
+                "numero_tarjeta": tarjeta_limpia[-4:],
                 "fecha_exp": fecha,
                 "fecha_compra": datetime.now(),
                 "productos_restringidos": len(productos_restringidos) > 0,
@@ -498,28 +454,20 @@ def pago():
             }
             
             resultado = pagos.insert_one(pago_data)
-            print(f"💾 Pago guardado en BD con ID: {resultado.inserted_id}")
 
-            # Limpiar carrito
             session["carrito"] = []
             session.modified = True
-            print("🛒 Carrito limpiado")
 
-            # Redirigir a página de éxito
-            print("✅ Redirigiendo a pago_exitoso")
             return render_template("pago_exitoso.html", 
                                  total=total, 
                                  usuario=session["usuario"],
                                  numero_orden=numero_orden)
                                  
         except Exception as e:
-            print(f"💥 Error en procesamiento de pago: {str(e)}")
             print(traceback.format_exc())
-            flash("❌ Error al procesar el pago. Intenta nuevamente.")
+            flash("❌ Error al procesar el pago.")
             return redirect(url_for("pago"))
 
-    # GET request - mostrar formulario de pago
-    print("📄 Mostrando formulario de pago (GET)")
     return render_template("pago.html", 
                          carrito=carrito, 
                          total=total,
@@ -530,19 +478,17 @@ def pago():
 # ---------------------------------------------------------
 @app.route("/pago_exitoso")
 def pago_exitoso():
-    print("🔍 Entrando a pago_exitoso")
     if "usuario" not in session:
         return redirect(url_for("login"))
     
     try:
-        # Obtener la última compra del usuario
         ultima_compra = pagos.find_one(
             {"usuario": session["usuario"]},
             sort=[("fecha_compra", -1)]
         )
         
         if not ultima_compra:
-            flash("❌ No se encontró información de pago reciente")
+            flash("❌ No se encontró información de pago")
             return redirect(url_for("inicio"))
         
         return render_template("pago_exitoso.html",
@@ -551,11 +497,11 @@ def pago_exitoso():
                              numero_orden=ultima_compra.get("numero_orden", generar_numero_orden()))
     except Exception as e:
         print(f"Error en pago_exitoso: {e}")
-        flash("❌ Error al cargar la confirmación de pago")
+        flash("❌ Error al cargar la página")
         return redirect(url_for("inicio"))
 
 # ---------------------------------------------------------
-# HISTORIAL DE COMPRAS
+# HISTORIAL
 # ---------------------------------------------------------
 @app.route("/historial")
 def historial():
@@ -582,7 +528,7 @@ def logout():
     return redirect(url_for("login"))
 
 # ---------------------------------------------------------
-# MANEJO DE ERRORES
+# ERRORES
 # ---------------------------------------------------------
 @app.errorhandler(404)
 def not_found(error):
